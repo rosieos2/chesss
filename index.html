@@ -174,13 +174,27 @@ button:hover {
     width: 350px;
     height: 220px;
     padding: 20px;
-    background: rgb(15, 18, 21);
-    border: 1px solid #00ffff;
-    overflow-y: auto;
-    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    line-height: 1.4;
     z-index: 1000;
+    overflow-y: auto;
+    background: rgba(15, 18, 21, 0.95); /* Simplified background */
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+    font-family: 'Share Tech Mono', monospace;
+    clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+    color: rgb(255, 255, 255) !important;
 }
 
+#thought-terminal::before {
+    content: "NEURAL NETWORK OUTPUT";
+    display: block;
+    color: #00ffff;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    font-weight: bold;
+}
 
 .thought-entry {
     border-left: 2px solid rgba(0, 255, 255, 0.3);
@@ -736,39 +750,60 @@ function loadRobot(glbPath) {
 async function displayAIThought(move, pieceType) {
     const terminal = document.getElementById('thought-terminal');
     
-    // First, create a wrapper for all our text with forced white styling
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = `
-        color: white !important;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-left: 2px solid #00ffff;
-        background: rgba(0, 0, 0, 0.3);
-    `;
+    // Add thinking message
+    const thinkingThought = document.createElement('div');
+    thinkingThought.className = 'thought-entry thinking';
+    thinkingThought.style.color = '#ffffff'; // Force white color
+    thinkingThought.innerHTML = '> Processing move... <span class="blink">_</span>';
+    terminal.appendChild(thinkingThought);
     
-    // Create the text element with direct styling
-    const textElement = document.createElement('span');
-    textElement.style.cssText = `
-        color: white !important;
-        font-family: 'Share Tech Mono', monospace;
-        font-weight: bold;
-        font-size: 14px;
-    `;
-    
-    // Set the text content
-    textElement.innerText = `> Analyzing move... *beep boop*`;
-    
-    // Append everything
-    wrapper.appendChild(textElement);
-    terminal.appendChild(wrapper);
-    
-    // Keep only last 5 messages
-    while (terminal.children.length > 5) {
-        terminal.removeChild(terminal.children[1]);
+    try {
+        const response = await fetch('/api/claude', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ move, pieceType })
+        });
+        
+        const data = await response.json();
+
+        // Remove thinking message
+        terminal.removeChild(thinkingThought);
+        
+        // Add actual response
+        const thought = document.createElement('div');
+        thought.className = 'thought-entry';
+        thought.style.color = '#ffffff'; // Force white color
+        terminal.appendChild(thought);
+        
+        const text = `> ${data.thought || "Hmm... interesting move!"}`;
+        
+        // Instead of using textContent, use innerHTML
+        thought.innerHTML = text;
+        thought.style.color = '#ffffff';
+        thought.style.textShadow = '0 0 10px rgba(0, 255, 255, 0.8)';
+        thought.style.fontWeight = '500';
+        
+        // Keep only last 5 thoughts
+        while (terminal.children.length > 6) {
+            terminal.removeChild(terminal.children[1]);
+        }
+        
+        terminal.scrollTop = terminal.scrollHeight;
+    } catch (error) {
+        console.error('Detailed error:', error);
+        
+        terminal.removeChild(thinkingThought);
+        
+        const errorThought = document.createElement('div');
+        errorThought.className = 'thought-entry error';
+        errorThought.style.color = '#ffffff'; // Force white color
+        errorThought.innerHTML = `> Error: ${error.message || 'Failed to process move'}`;
+        terminal.appendChild(errorThought);
+        
+        terminal.scrollTop = terminal.scrollHeight;
     }
-    
-    // Force scroll to bottom
-    terminal.scrollTop = terminal.scrollHeight;
 }
 
 // Animate piece movement
