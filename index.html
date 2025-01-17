@@ -37,13 +37,22 @@
 
 #coming-soon {
     position: fixed;
-    right: 20px;
-    top: 80px; /* Moved to top of screen below controls */
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%); /* Center horizontally */
     background: rgba(15, 18, 21, 0.85);
     color: #00ffff;
     padding: 10px 25px;
     border-radius: 5px;
-    z-index: 1000; /* Ensure it stays on top */
+    z-index: 1000;
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+    backdrop-filter: blur(10px);
+    animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
@@ -265,7 +274,7 @@ button:hover {
     setupMouseControls();
     
     // Load robot model
-    loadRobot('https://raw.githubusercontent.com/rosieos2/chess/main/chess1.glb');
+    loadRobot('https://raw.githubusercontent.com/rosieos2/chesss/main/robot.glb');
     
     animate();
 }
