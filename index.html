@@ -27,19 +27,22 @@
     position: fixed;
     right: 20px;
     bottom: 20px;
-    width: 300px;
-    height: 200px;
-    background: rgba(30, 30, 30, 0.9);
+    width: 350px;
+    height: 220px;
+    background: linear-gradient(165deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
     color: #00ff00;
-    padding: 15px;
+    padding: 20px;
     border-radius: 15px;
-    font-family: 'Courier New', monospace;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
     overflow-y: auto;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.1),
+                inset 0 0 20px rgba(0, 255, 0, 0.05);
     font-size: 14px;
     line-height: 1.4;
     z-index: 1000;
+    transition: all 0.3s ease;
 }
 
 #thought-terminal::-webkit-scrollbar {
@@ -52,8 +55,57 @@
 }
 
 #thought-terminal::-webkit-scrollbar-thumb {
-    background: rgba(0, 255, 0, 0.3);
+    background: rgba(0, 255, 0, 0.15);
     border-radius: 4px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+#thought-terminal::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 0, 0.25);
+}
+
+#thought-terminal::before {
+    content: "AI THOUGHT PROCESS";
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.1);
+    padding-bottom: 5px;
+    letter-spacing: 2px;
+}
+
+.thought-entry {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: rgba(0, 255, 0, 0.03);
+    border-radius: 8px;
+    border-left: 2px solid rgba(0, 255, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.thought-entry.thinking {
+    color: #666;
+}
+
+.thought-entry.error {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.05);
+    border-left: 2px solid rgba(255, 68, 68, 0.3);
+}
+
+.blink {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
         canvas { 
@@ -659,11 +711,15 @@ function loadRobot(glbPath) {
 
                     animateMove(selectedPiece, targetPosition);
                     setTimeout(() => {
-                        updateBoard();
-                        clearHighlights();
-                        document.getElementById('status').textContent = "AI is thinking...";
-                        setTimeout(makeAIMove, 500);
-                    }, 500);
+    updateBoard();
+    if (chess.game_over()) {
+        handleGameOver();
+    } else {
+        document.getElementById('status').textContent = "Your turn";
+        // Add AI's smug response about its own move
+        displayAIThought(move.to, "AI");
+    }
+}, 500);
                 } else {
                     console.log('Move is illegal'); // Debug log
                 }
@@ -703,15 +759,13 @@ function loadRobot(glbPath) {
 async function displayAIThought(move, pieceType) {
     const terminal = document.getElementById('thought-terminal');
     
-    // Add initial "thinking" message
+    // Add thinking message with new styling
     const thinkingThought = document.createElement('div');
-    thinkingThought.style.marginBottom = '10px';
-    thinkingThought.textContent = '> Processing move...';
+    thinkingThought.className = 'thought-entry thinking';
+    thinkingThought.innerHTML = '> Processing move... <span class="blink">_</span>';
     terminal.appendChild(thinkingThought);
     
     try {
-        console.log('Sending move to API:', { move, pieceType }); // Debug log
-
         const response = await fetch('/api/claude', {
             method: 'POST',
             headers: {
@@ -720,25 +774,14 @@ async function displayAIThought(move, pieceType) {
             body: JSON.stringify({ move, pieceType })
         });
         
-        console.log('Raw response:', response); // Debug log
-        
-        const responseText = await response.text(); // Get raw response text
-        console.log('Response text:', responseText); // Debug log
-        
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            console.error('JSON parse error:', e);
-            throw new Error(`Failed to parse response: ${responseText}`);
-        }
+        const data = await response.json();
 
         // Remove thinking message
         terminal.removeChild(thinkingThought);
         
-        // Add actual response
+        // Add actual response with animation
         const thought = document.createElement('div');
-        thought.style.marginBottom = '10px';
+        thought.className = 'thought-entry';
         terminal.appendChild(thought);
         
         const text = `> ${data.thought || "Hmm... interesting move!"}`;
@@ -754,18 +797,18 @@ async function displayAIThought(move, pieceType) {
         }, 20);
         
         // Keep only last 5 thoughts
-        while (terminal.children.length > 5) {
-            terminal.removeChild(terminal.firstChild);
+        while (terminal.children.length > 6) { // Increased to 6 to account for header
+            terminal.removeChild(terminal.children[1]); // Start at 1 to keep header
         }
     } catch (error) {
         console.error('Detailed error:', error);
         
-        // Remove thinking message and add error message
+        // Remove thinking message
         terminal.removeChild(thinkingThought);
         
+        // Add error message with new styling
         const errorThought = document.createElement('div');
-        errorThought.style.marginBottom = '10px';
-        errorThought.style.color = '#ff4444';
+        errorThought.className = 'thought-entry error';
         errorThought.textContent = `> Error: ${error.message || 'Failed to process move'}`;
         terminal.appendChild(errorThought);
         
