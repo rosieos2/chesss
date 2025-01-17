@@ -699,6 +699,8 @@ function loadRobot(glbPath) {
 }
 
 // Display AI thoughts
+// In your main JavaScript file, update the displayAIThought function
+
 async function displayAIThought(move) {
     const terminal = document.getElementById('thought-terminal');
     
@@ -712,7 +714,9 @@ async function displayAIThought(move) {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json();
+            console.error('API Error:', errorData);
+            throw new Error(`API error: ${errorData.error || 'Unknown error'}`);
         }
         
         const data = await response.json();
@@ -722,11 +726,8 @@ async function displayAIThought(move) {
         thought.style.marginBottom = '10px';
         terminal.appendChild(thought);
         
-        // Add a default message if the API fails
-        const thoughtText = data.thought || "Hmm... interesting move. *processing*";
-        
         let i = 0;
-        const text = `> ${thoughtText}`;
+        const text = `> ${data.thought || "Hmm... *processing move*"}`;
         const typeEffect = setInterval(() => {
             if (i < text.length) {
                 thought.textContent += text.charAt(i);
@@ -742,13 +743,17 @@ async function displayAIThought(move) {
             terminal.removeChild(terminal.firstChild);
         }
     } catch (error) {
-        console.error('Error getting AI thought:', error);
-        // Add an error message to the terminal
+        console.error('Detailed error:', error);
+        
+        // Add error message to terminal
         const errorThought = document.createElement('div');
         errorThought.style.marginBottom = '10px';
         errorThought.style.color = '#ff4444';
-        errorThought.textContent = '> Error processing move...';
+        errorThought.textContent = `> Error: ${error.message || 'Failed to process move'}`;
         terminal.appendChild(errorThought);
+        
+        // Scroll to bottom
+        terminal.scrollTop = terminal.scrollHeight;
     }
 }
 
