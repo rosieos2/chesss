@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Chess vs AI</title>
+    <link rel="icon" type="image/gif" href="https://cdn.prod.website-files.com/674396c59212c6ea348b24e0/678ac30eb7228a1983b82ed7_giphy%20(3).gif">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -421,10 +422,10 @@ function loadRobot(glbPath) {
     loader.load(glbPath, (gltf) => {
         robotModel = gltf.scene;
         
-        // Position the robot and face towards board
-        robotModel.position.set(0, 2, -10); // Moved closer and slightly higher
+        // Position the robot further back (changed z from -10 to -15)
+        robotModel.position.set(0, 2, -15); // Moved further back
         robotModel.rotation.y = 0; // Facing the board
-        robotModel.scale.set(3, 3, 3); // Increased scale
+        robotModel.scale.set(3, 3, 3);
         
         robotModel.traverse((child) => {
             if (child.isMesh) {
@@ -439,13 +440,15 @@ function loadRobot(glbPath) {
         robotMixer = new THREE.AnimationMixer(robotModel);
         const clips = gltf.animations;
         
-        // Find and store the Mixamo animation
-        const clip = THREE.AnimationClip.findByName(clips, 'mixamo.com');
+        // Changed to find ArmatureAction instead of mixamo.com
+        const clip = THREE.AnimationClip.findByName(clips, 'ArmatureAction');
         if (clip) {
             robotAction = robotMixer.clipAction(clip);
-            robotAction.loop = THREE.LoopRepeat; // Make animation loop continuously
-            robotAction.clampWhenFinished = false; // Don't clamp at the end
-            robotAction.play(); // Start playing immediately
+            robotAction.loop = THREE.LoopRepeat;
+            robotAction.clampWhenFinished = false;
+            robotAction.play();
+        } else {
+            console.log('ArmatureAction animation not found:', clips.map(c => c.name));
         }
     });
 }
