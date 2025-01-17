@@ -711,6 +711,10 @@ async function displayAIThought(move) {
             body: JSON.stringify({ move })
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         // Add new thought with typing effect
@@ -718,8 +722,11 @@ async function displayAIThought(move) {
         thought.style.marginBottom = '10px';
         terminal.appendChild(thought);
         
+        // Add a default message if the API fails
+        const thoughtText = data.thought || "Hmm... interesting move. *processing*";
+        
         let i = 0;
-        const text = `> ${data.thought}`;
+        const text = `> ${thoughtText}`;
         const typeEffect = setInterval(() => {
             if (i < text.length) {
                 thought.textContent += text.charAt(i);
@@ -736,6 +743,12 @@ async function displayAIThought(move) {
         }
     } catch (error) {
         console.error('Error getting AI thought:', error);
+        // Add an error message to the terminal
+        const errorThought = document.createElement('div');
+        errorThought.style.marginBottom = '10px';
+        errorThought.style.color = '#ff4444';
+        errorThought.textContent = '> Error processing move...';
+        terminal.appendChild(errorThought);
     }
 }
 
