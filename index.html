@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Chess vs AI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body { 
+            margin: 0;
+            background: #1a1a1a;
+            color: white;
+            overflow: hidden;
+        }
+
+        #thought-terminal {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 300px;
+    height: 200px;
+    background: rgba(30, 30, 30, 0.9);
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 15px;
+    font-family: 'Courier New', monospace;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 14px;
+    line-height: 1.4;
+    z-index: 1000;
+}
+
+#thought-terminal::-webkit-scrollbar {
+    width: 8px;
+}
+
+#thought-terminal::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+#thought-terminal::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 0, 0.3);
+    border-radius: 4px;
+}
+
+        canvas { 
+            display: block;
+        }
+
+        #stats {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(30, 30, 30, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 250px;
+        }
+
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        #social-links {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .social-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .social-button img {
+            width: 24px;
+            height: 24px;
+        }
+
+        button {
+            background: #2d2d2d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #3d3d3d;
+            transform: translateY(-2px);
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        p {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #cccccc;
+        }
+
+        #status {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+
+        .placeholder-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="stats">
+        <h2>Chess vs AI Master</h2>
+        <p>AI Wins: <span id="aiWins">0</span></p>
+        <p>Player Wins: <span id="playerWins">0</span></p>
+        <p>Status: <span id="status">Your turn</span></p>
+    </div>
+    <div id="controls">
+        <button onclick="resetCamera()">Reset View</button>
+        <button onclick="newGame()">New Game</button>
+    </div>
+    <div id="social-links">
+        <button onclick="window.open('GITBOOK_URL', '_blank')" class="social-button">
+            <div class="placeholder-icon"></div>
+        </button>
+        <button onclick="window.open('PUMP_FUN_URL', '_blank')" class="social-button">
+            <div class="placeholder-icon"></div>
+        </button>
+        <button onclick="window.open('TWITTER_URL', '_blank')" class="social-button">
+            <div class="placeholder-icon"></div>
+        </button>
+        <button onclick="window.open('DEXSCREENER_URL', '_blank')" class="social-button">
+            <div class="placeholder-icon"></div>
+        </button>
+    </div>
+    <div id="thought-terminal"></div>
+    <script>
+        let scene, camera, renderer, board;
+        let pieces = {};
+        let selectedPiece = null;
+        let highlightedSquares = [];
+        let aiWins = 0;
+        let playerWins = 0;
+        const chess = new Chess();
+
+        // Initialize Three.js scene
+        function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 20, 10);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+
+    // Add new face light
+    const robotFaceLight = new THREE.SpotLight(0xffffff, 1);
+    robotFaceLight.position.set(0, 10, -15); // Position for robot's face
+    robotFaceLight.angle = Math.PI / 6;
+    robotFaceLight.penumbra = 0.2;
+    robotFaceLight.decay = 1;
+    robotFaceLight.distance = 30;
+    scene.add(robotFaceLight);
+
+    // Optional: Add subtle fill light from the back
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    backLight.position.set(0, 5, -20);
+    scene.add(backLight);
+
+    // Set initial camera position
+    camera.position.set(0, 15, 15);
+    camera.lookAt(0, 0, 0);
+
+    createBoard();
+    createPieces();
+    setupMouseControls();
+    
+    // Load robot model
+    loadRobot('https://raw.githubusercontent.com/rosieos2/chess/main/chess1.glb');
+    
+    animate();
+}
+
+        // Create chess board
+        function createBoard() {
+            const boardGeometry = new THREE.BoxGeometry(16, 1, 16);
+            const boardMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            board = new THREE.Mesh(boardGeometry, boardMaterial);
+            board.receiveShadow = true;
+            scene.add(board);
+
+            // Create squares
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const squareGeometry = new THREE.BoxGeometry(1.8, 0.2, 1.8);
+                    const color = (i + j) % 2 === 0 ? 0xf0d9b5 : 0xb58863;
+                    const squareMaterial = new THREE.MeshPhongMaterial({ color });
+                    const square = new THREE.Mesh(squareGeometry, squareMaterial);
+                    square.position.set(
+                        -7 + i * 2,
+                        0.6,
+                        -7 + j * 2
+                    );
+                    square.receiveShadow = true;
+                    scene.add(square);
+                }
+            }
+        }
+
+        // Create piece geometries
+        function createPawnGeometry() {
+            const points = [
+                [0, 0], [0.4, 0], [0.4, 0.2], [0.3, 0.4], [0.35, 0.6],
+                [0.3, 0.8], [0.4, 1.0], [0.3, 1.2], [0, 1.4]
+            ].map(p => new THREE.Vector2(p[0], p[1]));
+            return new THREE.LatheGeometry(points, 32);
+        }
+
+        function createRookGeometry() {
+            const points = [
+                [0, 0], [0.5, 0], [0.5, 0.2], [0.45, 0.3], [0.45, 1.4],
+                [0.5, 1.5], [0.5, 1.7], [0.45, 1.8], [0.35, 1.9], [0, 2.0]
+            ].map(p => new THREE.Vector2(p[0], p[1]));
+            return new THREE.LatheGeometry(points, 4);
+        }
+
+        function createKnightGeometry() {
+            const group = new THREE.Group();
+            
+            // Base
+            const baseGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.4, 32);
+            const base = new THREE.Mesh(baseGeometry);
+            base.position.y = 0.2;
+            group.add(base);
+            
+            // Head
+            const headGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.3);
+            const head = new THREE.Mesh(headGeometry);
+            head.position.y = 1.2;
+            head.rotation.x = Math.PI / 6;
+            group.add(head);
+            
+            // Neck
+            const neckGeometry = new THREE.CylinderGeometry(0.2, 0.3, 0.8, 32);
+            const neck = new THREE.Mesh(neckGeometry);
+            neck.position.y = 0.7;
+            group.add(neck);
+
+            return group;
+        }
+
+        function createBishopGeometry() {
+            const points = [
+                [0, 0], [0.5, 0], [0.5, 0.2], [0.4, 0.4], [0.3, 0.8],
+                [0.25, 1.2], [0.3, 1.6], [0.25, 1.8], [0.15, 2.0], [0, 2.2]
+            ].map(p => new THREE.Vector2(p[0], p[1]));
+            const geometry = new THREE.LatheGeometry(points, 32);
+            
+            // Add cross on top
+            const crossGeometry = new THREE.BoxGeometry(0.1, 0.3, 0.1);
+            const cross = new THREE.Mesh(crossGeometry);
+            cross.position.y = 2.35;
+            
+            const group = new THREE.Group();
+            group.add(new THREE.Mesh(geometry));
+            group.add(cross);
+            return group;
+        }
+
+        function createQueenGeometry() {
+            const points = [
+                [0, 0], [0.6, 0], [0.6, 0.2], [0.5, 0.4], [0.4, 0.8],
+                [0.35, 1.2], [0.4, 1.6], [0.35, 2.0], [0.4, 2.2], [0.2, 2.4], [0, 2.6]
+            ].map(p => new THREE.Vector2(p[0], p[1]));
+            const geometry = new THREE.LatheGeometry(points, 32);
+            
+            // Add crown points
+            const group = new THREE.Group();
+            group.add(new THREE.Mesh(geometry));
+            
+            for (let i = 0; i < 8; i++) {
+                const sphereGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+                const sphere = new THREE.Mesh(sphereGeometry);
+                sphere.position.y = 2.7;
+                sphere.position.x = 0.3 * Math.cos(i * Math.PI / 4);
+                sphere.position.z = 0.3 * Math.sin(i * Math.PI / 4);
+                group.add(sphere);
+            }
+            return group;
+        }
+
+        function createKingGeometry() {
+            const points = [
+                [0, 0], [0.6, 0], [0.6, 0.2], [0.5, 0.4], [0.4, 0.8],
+                [0.35, 1.2], [0.4, 1.6], [0.35, 2.0], [0.4, 2.2], [0.2, 2.4], [0, 2.8]
+            ].map(p => new THREE.Vector2(p[0], p[1]));
+            const geometry = new THREE.LatheGeometry(points, 32);
+            
+            // Add cross on top
+            const group = new THREE.Group();
+            group.add(new THREE.Mesh(geometry));
+            
+            const verticalCross = new THREE.BoxGeometry(0.1, 0.4, 0.1);
+            const vCross = new THREE.Mesh(verticalCross);
+            vCross.position.y = 3.0;
+            group.add(vCross);
+            
+            const horizontalCross = new THREE.BoxGeometry(0.3, 0.1, 0.1);
+            const hCross = new THREE.Mesh(horizontalCross);
+            hCross.position.y = 2.9;
+            group.add(hCross);
+            
+            return group;
+        }
+
+        let robotMixer; // Make mixer globally accessible
+let robotAction; // Store the animation action
+let robotModel; // Store the robot model
+
+function loadRobot(glbPath) {
+    const loader = new THREE.GLTFLoader();
+
+    loader.load(glbPath, (gltf) => {
+        robotModel = gltf.scene;
+        
+        // Position the robot and face towards board
+        robotModel.position.set(0, 2, -10); // Moved closer and slightly higher
+        robotModel.rotation.y = 0; // Facing the board
+        robotModel.scale.set(3, 3, 3); // Increased scale
+        
+        robotModel.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        
+        scene.add(robotModel);
+
+        // Set up animation
+        robotMixer = new THREE.AnimationMixer(robotModel);
+        const clips = gltf.animations;
+        
+        // Find and store the Mixamo animation
+        const clip = THREE.AnimationClip.findByName(clips, 'mixamo.com');
+        if (clip) {
+            robotAction = robotMixer.clipAction(clip);
+            robotAction.loop = THREE.LoopRepeat; // Make animation loop continuously
+            robotAction.clampWhenFinished = false; // Don't clamp at the end
+            robotAction.play(); // Start playing immediately
+        }
+    });
+}
+
+        // Mouse controls
+        function setupMouseControls() {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    window.addEventListener('click', (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(scene.children, true); // Add true for recursive
+
+        if (intersects.length > 0) {
+            let clickedObject = intersects[0].object;
+            
+            // If we hit a piece's child mesh, traverse up to find the parent piece
+            while (clickedObject.parent && !(clickedObject.userData && clickedObject.userData.piece)) {
+                clickedObject = clickedObject.parent;
+            }
+            
+            // If we hit the board or a square when a piece is selected, use the intersection point
+            if (!clickedObject.userData.piece && selectedPiece) {
+                const point = intersects[0].point;
+                clickedObject = new THREE.Object3D();
+                clickedObject.position.copy(point);
+            }
+
+            handlePieceClick(clickedObject);
+        }
+    });
+
+    // Similar update for mousemove event
+    window.addEventListener('mousemove', (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(scene.children, true); // Add true for recursive
+
+        // Reset all piece highlights
+        scene.traverse((child) => {
+            if (child.material && child.material.emissive) {
+                child.material.emissive.setHex(0x000000);
+            }
+        });
+
+        if (intersects.length > 0) {
+            let hoveredObject = intersects[0].object;
+            
+            // Find the parent piece if we're hovering over a child mesh
+            while (hoveredObject.parent && !(hoveredObject.userData && hoveredObject.userData.piece)) {
+                hoveredObject = hoveredObject.parent;
+            }
+
+            if (hoveredObject.userData && hoveredObject.userData.piece && 
+                hoveredObject.userData.piece.color === 'w') {
+                hoveredObject.traverse((child) => {
+                    if (child.material && child.material.emissive) {
+                        child.material.emissive.setHex(0x666666);
+                    }
+                });
+            }
+        }
+    });
+}
+
+        // Get square from position
+        function getSquareFromPosition(x, z) {
+            // Round to nearest grid position and convert to chess coordinates
+            const file = String.fromCharCode(97 + Math.round((x + 7) / 2));
+            const rank = 8 - Math.round((z + 7) / 2);
+            return `${file}${rank}`;
+        }
+        
+        // Get position from square
+        function getPositionFromSquare(square) {
+            const file = square.charCodeAt(0) - 97;
+            const rank = 8 - parseInt(square[1]);
+            return {
+                x: -7 + file * 2,
+                z: -7 + rank * 2
+            };
+        }
+
+        // Create chess pieces
+        function createPieces() {
+            const whiteMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xFFFFFF,
+                shininess: 100
+            });
+            const blackMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x222222,
+                shininess: 100
+            });
+
+            const pieceGeometries = {
+                'p': createPawnGeometry(),
+                'r': createRookGeometry(),
+                'n': createKnightGeometry(),
+                'b': createBishopGeometry(),
+                'q': createQueenGeometry(),
+                'k': createKingGeometry()
+            };
+
+            // Clear existing pieces
+            Object.values(pieces).forEach(piece => {
+                scene.remove(piece);
+            });
+            pieces = {};
+
+            const startingPosition = chess.board();
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const piece = startingPosition[i][j];
+                    if (piece) {
+                        const geometry = pieceGeometries[piece.type.toLowerCase()];
+                        const material = piece.color === 'w' ? whiteMaterial : blackMaterial;
+                        
+                        let pieceMesh;
+                        if (geometry instanceof THREE.Group) {
+                            pieceMesh = geometry.clone();
+                            pieceMesh.traverse((child) => {
+                                if (child instanceof THREE.Mesh) {
+                                    child.material = material.clone();
+                                }
+                            });
+                        } else {
+                            pieceMesh = new THREE.Mesh(geometry, material.clone());
+                        }
+                        
+                        const square = String.fromCharCode(97 + j) + (8 - i);
+                        const position = getPositionFromSquare(square);
+                        
+                        pieceMesh.position.set(
+                            position.x,
+                            1.0,
+                            position.z
+                        );
+                        pieceMesh.castShadow = true;
+                        pieceMesh.userData = {
+                            piece: piece,
+                            square: square
+                        };
+                        scene.add(pieceMesh);
+                        pieces[square] = pieceMesh;
+                    }
+                }
+            }
+        }
+
+        // Highlight possible moves
+        function highlightPossibleMoves(square) {
+            clearHighlights();
+            
+            // Get all legal moves for the selected piece
+            const moves = chess.moves({
+                square: square,
+                verbose: true
+            });
+            
+            console.log('Legal moves:', moves); // Debug log
+            
+            moves.forEach(move => {
+                const targetPosition = getPositionFromSquare(move.to);
+                
+                // Create highlight circle
+                const highlightGeometry = new THREE.CircleGeometry(0.8, 32);
+                const highlightMaterial = new THREE.MeshBasicMaterial({
+                    color: move.captured ? 0xff0000 : 0x00ff00,
+                    transparent: true,
+                    opacity: 0.5,
+                    side: THREE.DoubleSide
+                });
+                
+                const highlight = new THREE.Mesh(highlightGeometry, highlightMaterial);
+                highlight.rotation.x = -Math.PI / 2; // Lay flat on the board
+                
+                highlight.position.set(
+                    targetPosition.x,
+                    0.7, // Slightly above the board
+                    targetPosition.z
+                );
+                
+                scene.add(highlight);
+                highlightedSquares.push(highlight);
+            });
+        }
+
+        // Handle piece selection and movement
+        function handlePieceClick(clickedObject) {
+            const clickedSquare = getSquareFromPosition(
+                clickedObject.position.x,
+                clickedObject.position.z
+            );
+            
+            console.log('Clicked square:', clickedSquare); // Debug log
+            
+            if (selectedPiece === null) {
+                // Selecting a piece
+                if (clickedObject.userData && clickedObject.userData.piece && 
+                    clickedObject.userData.piece.color === 'w' &&
+                    chess.turn() === 'w') {
+                        
+                    selectedPiece = clickedObject;
+                    console.log('Selected piece:', clickedObject.userData.piece.type, 'at', clickedObject.userData.square); // Debug log
+                    
+                    // Get and log all possible moves for this piece
+                    const possibleMoves = chess.moves({
+                        square: clickedObject.userData.square,
+                        verbose: true
+                    });
+                    console.log('Possible moves:', possibleMoves);
+                    
+                    highlightPossibleMoves(clickedObject.userData.square);
+                }
+            } else {
+                // Attempting to move to a square
+                const move = {
+                    from: selectedPiece.userData.square,
+                    to: clickedSquare,
+                    promotion: 'q'
+                };
+
+                console.log('Attempting move:', move); // Debug log
+                
+                // Check if the move is legal
+                if (chess.move(move)) {
+    console.log('Move is legal'); // Debug log
+    displayAIThought(clickedSquare);
+                    console.log('Move is legal'); // Debug log
+                    const targetPosition = new THREE.Vector3(
+                        -7 + (clickedSquare.charCodeAt(0) - 97) * 2,
+                        1.0,
+                        -7 + (8 - parseInt(clickedSquare[1])) * 2
+                    );
+
+                    animateMove(selectedPiece, targetPosition);
+                    setTimeout(() => {
+                        updateBoard();
+                        clearHighlights();
+                        document.getElementById('status').textContent = "AI is thinking...";
+                        setTimeout(makeAIMove, 500);
+                    }, 500);
+                } else {
+                    console.log('Move is illegal'); // Debug log
+                }
+
+                selectedPiece = null;
+                clearHighlights();
+            }
+        }
+
+        // Update board state
+        function updateBoard() {
+            // Remove all existing pieces
+            Object.values(pieces).forEach(piece => {
+                scene.remove(piece);
+            });
+            pieces = {};
+
+            // Create new pieces based on current game state
+            createPieces();
+        }
+
+        function clearHighlights() {
+            highlightedSquares.forEach(highlight => {
+                scene.remove(highlight);
+            });
+            highlightedSquares = [];
+        }
+
+        function animate() {
+    requestAnimationFrame(animate);
+    if (robotMixer) {
+        robotMixer.update(0.016);
+    }
+    renderer.render(scene, camera);
+}
+
+// Display AI thoughts
+async function displayAIThought(move) {
+    const terminal = document.getElementById('thought-terminal');
+    
+    try {
+        const response = await fetch('/api/claude', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ move })
+        });
+        
+        const data = await response.json();
+        
+        // Add new thought with typing effect
+        const thought = document.createElement('div');
+        thought.style.marginBottom = '10px';
+        terminal.appendChild(thought);
+        
+        let i = 0;
+        const text = `> ${data.thought}`;
+        const typeEffect = setInterval(() => {
+            if (i < text.length) {
+                thought.textContent += text.charAt(i);
+                i++;
+                terminal.scrollTop = terminal.scrollHeight;
+            } else {
+                clearInterval(typeEffect);
+            }
+        }, 20);
+        
+        // Keep only last 5 thoughts
+        while (terminal.children.length > 5) {
+            terminal.removeChild(terminal.firstChild);
+        }
+    } catch (error) {
+        console.error('Error getting AI thought:', error);
+    }
+}
+
+// Animate piece movement
+function animateMove(piece, targetPosition) {
+    const startPosition = piece.position.clone();
+    const midPosition = startPosition.clone().add(targetPosition).multiplyScalar(0.5);
+    midPosition.y += 2;
+
+    const curve = new THREE.QuadraticBezierCurve3(
+        startPosition,
+        midPosition,
+        targetPosition
+    );
+
+    const points = curve.getPoints(20);
+    let step = 0;
+
+    function animatePiece() {
+        if (step < points.length) {
+            piece.position.copy(points[step]);
+            step++;
+            requestAnimationFrame(animatePiece);
+        }
+    }
+
+    animatePiece();
+}
+
+// AI move implementation
+function makeAIMove() {
+    if (chess.game_over()) {
+        handleGameOver();
+        return;
+    }
+
+    // Play the struggle animation
+    if (robotAction) {
+        robotAction.reset();
+        robotAction.play();
+    }
+
+    const move = getBestMove(chess, 2);
+    const fromPiece = pieces[move.from];
+    const toPosition = new THREE.Vector3(
+        -7 + (move.to.charCodeAt(0) - 97) * 2,
+        1.7,
+        -7 + (8 - parseInt(move.to[1])) * 2
+    );
+
+    // Add a small random delay before making the move
+    setTimeout(() => {
+        animateMove(fromPiece, toPosition);
+        chess.move(move);
+
+        setTimeout(() => {
+            updateBoard();
+            if (chess.game_over()) {
+                handleGameOver();
+            } else {
+                document.getElementById('status').textContent = "Your turn";
+            }
+        }, 500);
+    }, Math.random() * 500 + 500); // Random delay between 500ms and 1000ms
+}
+
+        // Handle game over conditions
+        function handleGameOver() {
+            if (chess.in_checkmate()) {
+                if (chess.turn() === 'w') {
+                    document.getElementById('status').textContent = "Checkmate! AI wins!";
+                    aiWins++;
+                    document.getElementById('aiWins').textContent = aiWins;
+                } else {
+                    document.getElementById('status').textContent = "Congratulations! You win!";
+                    playerWins++;
+                    document.getElementById('playerWins').textContent = playerWins;
+                }
+            } else if (chess.in_draw()) {
+                document.getElementById('status').textContent = "Game drawn!";
+            } else if (chess.in_stalemate()) {
+                document.getElementById('status').textContent = "Stalemate!";
+            }
+        }
+
+        // AI evaluation and move selection (same as before)
+        function evaluatePosition(game) {
+            const pieces = {
+                p: 1, n: 3, b: 3, r: 5, q: 9, k: 0
+            };
+            
+            let score = 0;
+            
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const square = String.fromCharCode(97 + j) + (8 - i);
+                    const piece = game.get(square);
+                    
+                    if (piece) {
+                        const value = pieces[piece.type.toLowerCase()];
+                        score += piece.color === 'b' ? value : -value;
+                    }
+                }
+            }
+            
+            const centerSquares = ['d4', 'd5', 'e4', 'e5'];
+            centerSquares.forEach(square => {
+                const piece = game.get(square);
+                if (piece && piece.color === 'b') {
+                    score += 0.5;
+                }
+            });
+            
+            return score;
+        }
+
+        function minimax(game, depth, alpha, beta, maximizingPlayer) {
+            if (depth === 0 || game.game_over()) {
+                return evaluatePosition(game);
+            }
+
+            if (maximizingPlayer) {
+                let maxEval = -Infinity;
+                const moves = game.moves();
+                
+                for (let move of moves) {
+                    game.move(move);
+                    const eval = minimax(game, depth - 1, alpha, beta, false);
+                    game.undo();
+                    
+                    maxEval = Math.max(maxEval, eval);
+                    alpha = Math.max(alpha, eval);
+                    if (beta <= alpha) break;
+                }
+                
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                const moves = game.moves();
+                
+                for (let move of moves) {
+                    game.move(move);
+                    const eval = minimax(game, depth - 1, alpha, beta, true);
+                    game.undo();
+                    
+                    minEval = Math.min(minEval, eval);
+                    beta = Math.min(beta, eval);
+                    if (beta <= alpha) break;
+                }
+                
+                return minEval;
+            }
+        }
+
+        function getBestMove(game, depth) {
+            let bestMove = null;
+            let bestValue = -Infinity;
+            const moves = game.moves({ verbose: true });
+            
+            for (let move of moves) {
+                game.move(move);
+                const value = minimax(game, depth - 1, -Infinity, Infinity, false);
+                game.undo();
+                
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestMove = move;
+                }
+            }
+            
+            return bestMove;
+        }
+
+        // Reset camera position
+        function resetCamera() {
+            camera.position.set(0, 15, 15);
+            camera.lookAt(0, 0, 0);
+        }
+
+        // Start new game
+        function newGame() {
+            chess.reset();
+            updateBoard();
+            document.getElementById('status').textContent = "Your turn";
+        }
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Add orbit controls for camera
+        let isDragging = false;
+        let previousMousePosition = {
+            x: 0,
+            y: 0
+        };
+
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaMove = {
+                    x: e.offsetX - previousMousePosition.x,
+                    y: e.offsetY - previousMousePosition.y
+                };
+
+                if (e.buttons === 2) { // Right mouse button
+                    // Orbit camera
+                    const deltaRotationQuaternion = new THREE.Quaternion()
+                        .setFromEuler(new THREE.Euler(
+                            deltaMove.y * (0.01),
+                            deltaMove.x * (0.01),
+                            0,
+                            'XYZ'
+                        ));
+
+                    camera.position.applyQuaternion(deltaRotationQuaternion);
+                    camera.lookAt(0, 0, 0);
+                }
+            }
+
+            previousMousePosition = {
+                x: e.offsetX,
+                y: e.offsetY
+            };
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            isDragging = false;
+        });
+
+        // Prevent context menu on right-click
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Add mouse wheel zoom
+        document.addEventListener('wheel', (e) => {
+            const zoomSpeed = 0.1;
+            const direction = e.deltaY > 0 ? 1 : -1;
+            const distance = camera.position.length();
+            
+            // Limit minimum and maximum zoom
+            if ((distance > 5 || direction > 0) && (distance < 30 || direction < 0)) {
+                camera.position.multiplyScalar(1 + direction * zoomSpeed);
+            }
+        });
+
+        // Initialize the game
+        init();
+    </script>
+</body>
+</html>
