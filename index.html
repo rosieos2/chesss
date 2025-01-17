@@ -647,7 +647,9 @@ function loadRobot(glbPath) {
                 // Check if the move is legal
                 if (chess.move(move)) {
     console.log('Move is legal'); // Debug log
-    displayAIThought(clickedSquare);
+    // Get the piece type that was moved
+    const pieceType = selectedPiece.userData.piece.type;
+    displayAIThought(clickedSquare, pieceType)
                     console.log('Move is legal'); // Debug log
                     const targetPosition = new THREE.Vector3(
                         -7 + (clickedSquare.charCodeAt(0) - 97) * 2,
@@ -698,7 +700,7 @@ function loadRobot(glbPath) {
     renderer.render(scene, camera);
 }
 
-async function displayAIThought(move) {
+async function displayAIThought(move, pieceType) {
     const terminal = document.getElementById('thought-terminal');
     
     // Add initial "thinking" message
@@ -708,14 +710,14 @@ async function displayAIThought(move) {
     terminal.appendChild(thinkingThought);
     
     try {
-        console.log('Sending move to API:', move); // Debug log
+        console.log('Sending move to API:', { move, pieceType }); // Debug log
 
         const response = await fetch('/api/claude', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ move })
+            body: JSON.stringify({ move, pieceType })
         });
         
         console.log('Raw response:', response); // Debug log
