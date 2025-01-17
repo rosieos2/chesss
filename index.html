@@ -746,9 +746,10 @@ function loadRobot(glbPath) {
 async function displayAIThought(move, pieceType) {
     const terminal = document.getElementById('thought-terminal');
     
-    // Add thinking message with new styling
+    // Add thinking message
     const thinkingThought = document.createElement('div');
     thinkingThought.className = 'thought-entry thinking';
+    thinkingThought.style.color = '#ffffff'; // Force white color
     thinkingThought.innerHTML = '> Processing move... <span class="blink">_</span>';
     terminal.appendChild(thinkingThought);
     
@@ -766,37 +767,35 @@ async function displayAIThought(move, pieceType) {
         // Remove thinking message
         terminal.removeChild(thinkingThought);
         
-        // Add actual response with animation
+        // Add actual response
         const thought = document.createElement('div');
         thought.className = 'thought-entry';
+        thought.style.color = '#ffffff'; // Force white color
         terminal.appendChild(thought);
         
         const text = `> ${data.thought || "Hmm... interesting move!"}`;
-        let i = 0;
-        const typeEffect = setInterval(() => {
-            if (i < text.length) {
-                thought.textContent += text.charAt(i);
-                i++;
-                terminal.scrollTop = terminal.scrollHeight;
-            } else {
-                clearInterval(typeEffect);
-            }
-        }, 20);
+        
+        // Instead of using textContent, use innerHTML
+        thought.innerHTML = text;
+        thought.style.color = '#ffffff';
+        thought.style.textShadow = '0 0 10px rgba(0, 255, 255, 0.8)';
+        thought.style.fontWeight = '500';
         
         // Keep only last 5 thoughts
-        while (terminal.children.length > 6) { // Increased to 6 to account for header
-            terminal.removeChild(terminal.children[1]); // Start at 1 to keep header
+        while (terminal.children.length > 6) {
+            terminal.removeChild(terminal.children[1]);
         }
+        
+        terminal.scrollTop = terminal.scrollHeight;
     } catch (error) {
         console.error('Detailed error:', error);
         
-        // Remove thinking message
         terminal.removeChild(thinkingThought);
         
-        // Add error message with new styling
         const errorThought = document.createElement('div');
         errorThought.className = 'thought-entry error';
-        errorThought.textContent = `> Error: ${error.message || 'Failed to process move'}`;
+        errorThought.style.color = '#ffffff'; // Force white color
+        errorThought.innerHTML = `> Error: ${error.message || 'Failed to process move'}`;
         terminal.appendChild(errorThought);
         
         terminal.scrollTop = terminal.scrollHeight;
