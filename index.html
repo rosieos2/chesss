@@ -181,30 +181,29 @@ button:hover {
     background: linear-gradient(165deg, rgba(15, 18, 21, 0.95) 0%, rgba(25, 28, 31, 0.95) 100%);
     border: 1px solid rgba(0, 255, 255, 0.1);
     box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
-    color: #ffffff !important;
     font-family: 'Share Tech Mono', monospace;
     clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
 }
 
 #thought-terminal::before {
     content: "NEURAL NETWORK OUTPUT";
-    color: rgba(0, 255, 255, 0.8); /* Brightened from 0.5 to 0.8 */
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
     display: block;
+    color: #00ffff;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
     margin-bottom: 15px;
     padding-bottom: 5px;
+    font-weight: bold;
 }
 
 .thought-entry {
-    border-left: 2px solid rgba(0, 255, 255, 0.3);
-    background: rgba(0, 255, 255, 0.03);
     margin-bottom: 15px;
     padding: 10px;
-    color: #ffffff !important;
-    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5); /* Added glow effect */
-    font-weight: 500; /* Made text slightly bolder */
+    background: rgba(0, 255, 255, 0.03);
+    border-left: 2px solid rgba(0, 255, 255, 0.3);
+    color: rgb(255, 255, 255) !important;
+    font-weight: 500;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
 }
-
 .thought-entry > {
     color: #ffffff !important; /* Force white color for the text */
 }
