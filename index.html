@@ -422,10 +422,10 @@ function loadRobot(glbPath) {
     loader.load(glbPath, (gltf) => {
         robotModel = gltf.scene;
         
-        // Position the robot further back (changed z from -10 to -15)
-        robotModel.position.set(0, 2, -15); // Moved further back
-        robotModel.rotation.y = 0; // Facing the board
-        robotModel.scale.set(3, 3, 3);
+        // Reduced scale from 3 to 2, increased y position from 2 to 4
+        robotModel.position.set(0, 4, -15);
+        robotModel.rotation.y = 0;
+        robotModel.scale.set(2, 2, 2); // Made model smaller
         
         robotModel.traverse((child) => {
             if (child.isMesh) {
@@ -440,12 +440,12 @@ function loadRobot(glbPath) {
         robotMixer = new THREE.AnimationMixer(robotModel);
         const clips = gltf.animations;
         
-        // Changed to find ArmatureAction instead of mixamo.com
         const clip = THREE.AnimationClip.findByName(clips, 'ArmatureAction');
         if (clip) {
             robotAction = robotMixer.clipAction(clip);
             robotAction.loop = THREE.LoopRepeat;
             robotAction.clampWhenFinished = false;
+            robotAction.timeScale = 0.5; // Slowed down animation to half speed
             robotAction.play();
         } else {
             console.log('ArmatureAction animation not found:', clips.map(c => c.name));
