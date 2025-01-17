@@ -178,7 +178,7 @@ button:hover {
     line-height: 1.4;
     z-index: 1000;
     overflow-y: auto;
-    background: rgba(15, 18, 21, 0.95); /* Simplified background */
+    background: linear-gradient(165deg, rgba(15, 18, 21, 0.95) 0%, rgba(25, 28, 31, 0.95) 100%);
     border: 1px solid rgba(0, 255, 255, 0.1);
     box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
     font-family: 'Share Tech Mono', monospace;
@@ -198,26 +198,15 @@ button:hover {
 
 .thought-entry {
     border-left: 2px solid rgba(0, 255, 255, 0.3);
+    background: rgba(0, 255, 255, 0.03);
     margin-bottom: 15px;
     padding: 10px;
     color: rgb(255, 255, 255) !important;
     font-weight: bold !important;
-    background: none; /* Removed background */
-    text-shadow: none; /* Removed text shadow */
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
 }
 .thought-entry > {
     color: #ffffff !important; /* Force white color for the text */
-}
-
-#thought-terminal div,
-#thought-terminal span,
-#thought-terminal p,
-.thought-entry * {
-    color: rgb(255, 255, 255) !important;
-}
-
-.thought-entry > span {
-    color: rgb(255, 255, 255) !important;
 }
     </style>
 </head>
@@ -758,29 +747,59 @@ function loadRobot(glbPath) {
 async function displayAIThought(move, pieceType) {
     const terminal = document.getElementById('thought-terminal');
     
+    // Add thinking message
+    const thinkingThought = document.createElement('div');
+    thinkingThought.className = 'thought-entry thinking';
+    thinkingThought.style.color = '#ffffff'; // Force white color
+    thinkingThought.innerHTML = '> Processing move... <span class="blink">_</span>';
+    terminal.appendChild(thinkingThought);
+    
     try {
+        const response = await fetch('/api/claude', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ move, pieceType })
+        });
+        
+        const data = await response.json();
+
+        // Remove thinking message
+        terminal.removeChild(thinkingThought);
+        
+        // Add actual response
         const thought = document.createElement('div');
         thought.className = 'thought-entry';
-        thought.setAttribute('style', 'color: rgb(255, 255, 255) !important; font-weight: bold;');
-        
-        const text = `> Hmm... interesting move!`;
-        thought.innerHTML = `<span style="color: rgb(255, 255, 255) !important;">${text}</span>`;
-        
+        thought.style.color = '#ffffff'; // Force white color
         terminal.appendChild(thought);
-        terminal.scrollTop = terminal.scrollHeight;
+        
+        const text = `> ${data.thought || "Hmm... interesting move!"}`;
+        
+        // Instead of using textContent, use innerHTML
+        thought.innerHTML = text;
+        thought.style.color = '#ffffff';
+        thought.style.textShadow = '0 0 10px rgba(0, 255, 255, 0.8)';
+        thought.style.fontWeight = '500';
         
         // Keep only last 5 thoughts
         while (terminal.children.length > 6) {
             terminal.removeChild(terminal.children[1]);
         }
         
+        terminal.scrollTop = terminal.scrollHeight;
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Detailed error:', error);
+        
+        terminal.removeChild(thinkingThought);
+        
         const errorThought = document.createElement('div');
-        errorThought.className = 'thought-entry';
-        errorThought.setAttribute('style', 'color: rgb(255, 255, 255) !important; font-weight: bold;');
-        errorThought.innerHTML = `<span style="color: rgb(255, 255, 255) !important;">> Error: Failed to process move</span>`;
+        errorThought.className = 'thought-entry error';
+        errorThought.style.color = '#ffffff'; // Force white color
+        errorThought.innerHTML = `> Error: ${error.message || 'Failed to process move'}`;
         terminal.appendChild(errorThought);
+        
+        terminal.scrollTop = terminal.scrollHeight;
     }
 }
 
