@@ -661,73 +661,68 @@ function loadRobot(glbPath) {
 
         // Handle piece selection and movement
         function handlePieceClick(clickedObject) {
-            const clickedSquare = getSquareFromPosition(
-                clickedObject.position.x,
-                clickedObject.position.z
-            );
-            
-            console.log('Clicked square:', clickedSquare); // Debug log
-            
-            if (selectedPiece === null) {
-                // Selecting a piece
-                if (clickedObject.userData && clickedObject.userData.piece && 
-                    clickedObject.userData.piece.color === 'w' &&
-                    chess.turn() === 'w') {
-                        
-                    selectedPiece = clickedObject;
-                    console.log('Selected piece:', clickedObject.userData.piece.type, 'at', clickedObject.userData.square); // Debug log
-                    
-                    // Get and log all possible moves for this piece
-                    const possibleMoves = chess.moves({
-                        square: clickedObject.userData.square,
-                        verbose: true
-                    });
-                    console.log('Possible moves:', possibleMoves);
-                    
-                    highlightPossibleMoves(clickedObject.userData.square);
-                }
-            } else {
-                // Attempting to move to a square
-                const move = {
-                    from: selectedPiece.userData.square,
-                    to: clickedSquare,
-                    promotion: 'q'
-                };
-
-                console.log('Attempting move:', move); // Debug log
+    const clickedSquare = getSquareFromPosition(
+        clickedObject.position.x,
+        clickedObject.position.z
+    );
+    
+    console.log('Clicked square:', clickedSquare); // Debug log
+    
+    if (selectedPiece === null) {
+        // Selecting a piece
+        if (clickedObject.userData && clickedObject.userData.piece && 
+            clickedObject.userData.piece.color === 'w' &&
+            chess.turn() === 'w') {
                 
-                // Check if the move is legal
-                if (chess.move(move)) {
-    console.log('Move is legal'); // Debug log
-    // Get the piece type that was moved
-    const pieceType = selectedPiece.userData.piece.type;
-    displayAIThought(clickedSquare, pieceType)
-                    console.log('Move is legal'); // Debug log
-                    const targetPosition = new THREE.Vector3(
-                        -7 + (clickedSquare.charCodeAt(0) - 97) * 2,
-                        1.0,
-                        -7 + (8 - parseInt(clickedSquare[1])) * 2
-                    );
-
-                    animateMove(selectedPiece, targetPosition);
-                    setTimeout(() => {
-    updateBoard();
-    if (chess.game_over()) {
-        handleGameOver();
-    } else {
-        document.getElementById('status').textContent = "Your turn";
-        // Add AI's smug response about its own move
-        displayAIThought(move.to, "AI");
-    }
-}, 500);
-                } else {
-                    console.log('Move is illegal'); // Debug log
-                }
-
-                selectedPiece = null;
-                clearHighlights();
-            }
+            selectedPiece = clickedObject;
+            console.log('Selected piece:', clickedObject.userData.piece.type, 'at', clickedObject.userData.square); // Debug log
+            
+            // Get and log all possible moves for this piece
+            const possibleMoves = chess.moves({
+                square: clickedObject.userData.square,
+                verbose: true
+            });
+            console.log('Possible moves:', possibleMoves);
+            
+            highlightPossibleMoves(clickedObject.userData.square);
         }
+    } else {
+        // Attempting to move to a square
+        const move = {
+            from: selectedPiece.userData.square,
+            to: clickedSquare,
+            promotion: 'q'
+        };
+
+        console.log('Attempting move:', move); // Debug log
+        
+        // Check if the move is legal
+        if (chess.move(move)) {
+            console.log('Move is legal'); // Debug log
+            const pieceType = selectedPiece.userData.piece.type;
+            displayAIThought(clickedSquare, pieceType);
+            
+            const targetPosition = new THREE.Vector3(
+                -7 + (clickedSquare.charCodeAt(0) - 97) * 2,
+                1.0,
+                -7 + (8 - parseInt(clickedSquare[1])) * 2
+            );
+
+            animateMove(selectedPiece, targetPosition);
+            setTimeout(() => {
+                updateBoard();
+                clearHighlights();
+                document.getElementById('status').textContent = "AI is thinking...";
+                setTimeout(makeAIMove, 500);
+            }, 500);
+        } else {
+            console.log('Move is illegal'); // Debug log
+        }
+
+        selectedPiece = null;
+        clearHighlights();
+    }
+}
 
         // Update board state
         function updateBoard() {
