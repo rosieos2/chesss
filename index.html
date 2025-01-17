@@ -698,13 +698,18 @@ function loadRobot(glbPath) {
     renderer.render(scene, camera);
 }
 
-// Display AI thoughts
-// In your main JavaScript file, update the displayAIThought function
-
 async function displayAIThought(move) {
     const terminal = document.getElementById('thought-terminal');
     
+    // Add initial "thinking" message
+    const thinkingThought = document.createElement('div');
+    thinkingThought.style.marginBottom = '10px';
+    thinkingThought.textContent = '> Processing move...';
+    terminal.appendChild(thinkingThought);
+    
     try {
+        console.log('Sending move to API:', move); // Debug log
+
         const response = await fetch('/api/claude', {
             method: 'POST',
             headers: {
@@ -713,21 +718,29 @@ async function displayAIThought(move) {
             body: JSON.stringify({ move })
         });
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('API Error:', errorData);
-            throw new Error(`API error: ${errorData.error || 'Unknown error'}`);
+        console.log('Raw response:', response); // Debug log
+        
+        const responseText = await response.text(); // Get raw response text
+        console.log('Response text:', responseText); // Debug log
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            throw new Error(`Failed to parse response: ${responseText}`);
         }
+
+        // Remove thinking message
+        terminal.removeChild(thinkingThought);
         
-        const data = await response.json();
-        
-        // Add new thought with typing effect
+        // Add actual response
         const thought = document.createElement('div');
         thought.style.marginBottom = '10px';
         terminal.appendChild(thought);
         
+        const text = `> ${data.thought || "Hmm... interesting move!"}`;
         let i = 0;
-        const text = `> ${data.thought || "Hmm... *processing move*"}`;
         const typeEffect = setInterval(() => {
             if (i < text.length) {
                 thought.textContent += text.charAt(i);
@@ -745,14 +758,15 @@ async function displayAIThought(move) {
     } catch (error) {
         console.error('Detailed error:', error);
         
-        // Add error message to terminal
+        // Remove thinking message and add error message
+        terminal.removeChild(thinkingThought);
+        
         const errorThought = document.createElement('div');
         errorThought.style.marginBottom = '10px';
         errorThought.style.color = '#ff4444';
         errorThought.textContent = `> Error: ${error.message || 'Failed to process move'}`;
         terminal.appendChild(errorThought);
         
-        // Scroll to bottom
         terminal.scrollTop = terminal.scrollHeight;
     }
 }
