@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        * body { 
+        body { 
     margin: 0;
     background: linear-gradient(135deg, #0f1215 0%, #232a2f 100%);
     color: #00ffff;
@@ -132,6 +132,16 @@ button:hover {
 
 /* Thought Terminal Enhancement */
 #thought-terminal {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 350px;
+    height: 220px;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.4;
+    z-index: 1000;
+    overflow-y: auto;
     background: linear-gradient(165deg, rgba(15, 18, 21, 0.95) 0%, rgba(25, 28, 31, 0.95) 100%);
     border: 1px solid rgba(0, 255, 255, 0.1);
     box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
@@ -190,7 +200,7 @@ button:hover {
         // Initialize Three.js scene
         function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB);
+    scene.background = new THREE.Color(0x0f1215);
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
