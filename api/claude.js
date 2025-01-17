@@ -27,14 +27,14 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: "claude-3-opus-20240229",
-        max_tokens: 150,
-        temperature: 0.9,
-        messages: [{
-          role: "user",
-          content: `You are a sarcastic chess AI. The player just moved their piece to ${move}. Make a short, witty, taunting response about their move (max 2 sentences). Be playful but not mean.`
-        }]
-      })
+  model: "claude-3-opus-20240229",
+  max_tokens: 150,
+  temperature: 0.9,
+  messages: [{
+    role: "user",
+    content: `You are a sarcastic chess AI. A player in a chess game just moved to ${move}. Think about what piece could have moved there based on standard chess rules and strategy. Make a short, witty taunt about their decision (1-2 sentences). Be creative and playful - mix in chess puns, jokes about their strategy, or references to famous chess blunders. Don't just state what piece moved - focus on mocking their strategy or decision making. Vary your responses and don't be repetitive.`
+  }]
+})
     });
 
     if (!claudeResponse.ok) {
