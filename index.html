@@ -35,6 +35,30 @@
     backdrop-filter: blur(10px);
 }
 
+#coming-soon {
+    position: fixed;
+    right: 20px;
+    bottom: 250px; /* Position it above the thought terminal */
+    background: rgba(15, 18, 21, 0.85);
+    color: #00ffff;
+    padding: 10px 25px;
+    border-radius: 5px;
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+    backdrop-filter: blur(10px);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(0, 255, 255, 0.8); }
+    100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5); }
+}
+
 #stats h2 {
     color: #00ffff;
     font-size: 24px;
@@ -187,6 +211,8 @@ button:hover {
             <div class="placeholder-icon"></div>
         </button>
     </div>
+    <div id="coming-soon">CA: SOON</div>
+<div id="thought-terminal"></div>
     <div id="thought-terminal"></div>
     <script>
         let scene, camera, renderer, board;
