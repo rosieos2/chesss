@@ -1,18 +1,8 @@
 {
-  "name": "chess-ai",
-  "version": "1.0.0",
-  "description": "3D Chess AI with Claude integration",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "@vercel/edge": "^1.1.0",
-    "next": "^14.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "name": "chess-ai",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+      "@vercel/edge": "^1.1.0"
+    }
   }
-}
